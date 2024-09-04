@@ -28,4 +28,22 @@ distinct value_date , CASE
         ELSE value_date
     END AS updated_value_date
 FROM
+	credit_card_transaction_files cctf;
+
+
+
+-- extracted the card_type,formated dates  
+SELECT
+	str_to_date(CONCAT(Transaction_Date, '-', DATE_FORMAT(STR_TO_DATE(CONCAT(REGEXP_SUBSTR(file_name, '[0-9]+'), '01') ,
+	'%Y%m%d'), '%Y') ),
+	'%d-%m-%Y') as updated_transaction_date ,
+	str_to_date(CONCAT(Value_Date , '-', DATE_FORMAT(STR_TO_DATE(CONCAT(REGEXP_SUBSTR(file_name, '[0-9]+'), '01') ,
+	'%Y%m%d'), '%Y') ),
+	'%d-%m-%Y') as updated_value_date ,
+	Description ,
+	signed_amount ,
+	STR_TO_DATE(CONCAT(REGEXP_SUBSTR(file_name, '[0-9]+'), '01') ,
+	'%Y%m%d') as statement_date,
+	trim(REGEXP_SUBSTR(file_name, '[a-z]+[A-Z]+')) as card_type
+FROM
 	credit_card_transaction_files cctf
