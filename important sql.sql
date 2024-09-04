@@ -47,3 +47,14 @@ SELECT
 	trim(REGEXP_SUBSTR(file_name, '[a-z]+[A-Z]+')) as card_type
 FROM
 	credit_card_transaction_files cctf
+
+
+	select
+	STR_TO_DATE(CONCAT(REGEXP_SUBSTR(file_name, '[0-9]+'), '01') ,
+	'%Y%m%d') as statement_date,
+	sum(DISTINCT card_limit) as total_credit_limit,sum(DISTINCT Available_Credit_Limit) Available_Credit_Limit ,sum(Total_Amount_Due) Total_Amount_Due 
+from
+	credit_card_transaction_summary ccts
+group by
+	STR_TO_DATE(CONCAT(REGEXP_SUBSTR(file_name, '[0-9]+'), '01') ,
+	'%Y%m%d')
