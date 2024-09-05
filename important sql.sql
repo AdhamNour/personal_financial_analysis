@@ -48,13 +48,40 @@ SELECT
 FROM
 	credit_card_transaction_files cctf
 
+-- summary
 
-	select
-	STR_TO_DATE(CONCAT(REGEXP_SUBSTR(file_name, '[0-9]+'), '01') ,
-	'%Y%m%d') as statement_date,
-	sum(DISTINCT card_limit) as total_credit_limit,sum(DISTINCT Available_Credit_Limit) Available_Credit_Limit ,sum(Total_Amount_Due) Total_Amount_Due 
+with summary as (
+select
+	last_day(STR_TO_DATE(CONCAT(REGEXP_SUBSTR(file_name, '[0-9]+'), '01') ,
+	'%Y%m%d')) as statement_date,
+	sum(DISTINCT card_limit) as total_credit_limit,
+	sum(DISTINCT Available_Credit_Limit) Available_Credit_Limit ,
+	sum(Total_Amount_Due) Total_Amount_Due
 from
 	credit_card_transaction_summary ccts
 group by
-	STR_TO_DATE(CONCAT(REGEXP_SUBSTR(file_name, '[0-9]+'), '01') ,
-	'%Y%m%d')
+	last_day(STR_TO_DATE(CONCAT(REGEXP_SUBSTR(file_name, '[0-9]+'), '01') ,
+	'%Y%m%d'))
+)select
+	statement_date,
+	total_credit_limit,
+	LAG (total_credit_limit,
+	1,
+	0)over(
+	order by statement_date asc) as prev_month_total_credit_limit,
+	available_credit_limit,
+	LAG (available_credit_limit,
+	1,
+	0)over(
+	order by statement_date asc) prev_month_available_credit,
+	total_amount_due,LAG (total_amount_due,
+	1,
+	0)over(
+	order by statement_date asc) prev_month_total_amount_due
+from
+	summary
+order by
+	statement_date ASC ;
+	
+
+-- TRUNCATE  credit_card_transaction_files 
