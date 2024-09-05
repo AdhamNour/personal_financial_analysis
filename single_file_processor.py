@@ -8,6 +8,7 @@ from datetime import datetime
 def load_file(host_name :str,database_name:str,username:str,password:str,file_path:str):
     load_transaction(host_name,database_name,username,password,file_path)
     load_summary(host_name,database_name,username,password,file_path)
+    load_installments(host_name,database_name,username,password,file_path)
 
 
 def load_transaction(host_name :str,database_name:str,username:str,password:str,file_path:str):
@@ -48,3 +49,11 @@ def load_summary(host_name :str,database_name:str,username:str,password:str,file
     engine = create_engine(f"mysql+pymysql://{username}:{password}@{host_name}/{database_name}")
     df.to_sql("credit_card_transaction_summary", engine, if_exists="append", index=False)
 
+def load_installments(host_name :str,database_name:str,username:str,password:str,file_path:str):
+    df=pd.read_excel(io=file_path)
+    df=df[df['Unnamed: 3'].notna() & df['Unnamed: 6'].notna()]
+    df = df.iloc[:, [3, 6, 13, 18,22,27,35]]
+    df.columns=['Marchant_Name','Enrollment_Date','Principle','Interest','Total','Installment_No','Total_Number_Of_Installments']
+    df['file_name']=os.path.basename(file_path)
+    engine = create_engine(f"mysql+pymysql://{username}:{password}@{host_name}/{database_name}")
+    df.to_sql("credit_card_installments_summary", engine, if_exists="append", index=False)
