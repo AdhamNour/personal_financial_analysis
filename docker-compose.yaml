@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+
+  application_database:
+    image: postgres:13.1-alpine
+    restart: always
+    volumes:
+      - ./pgdata:${DB_DATA_DIR}
+    environment:
+      - PGDATA=${DB_DATA_DIR}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+
+  metabase:
+    image: metabase/metabase:latest
+    restart: always
+    environment:
+      MB_DB_TYPE: "postgres"
+      MB_DB_DBNAME: "${DB_NAME}"
+      MB_DB_PORT: "5432"
+      MB_DB_USER: "${DB_USER}"
+      MB_DB_PASS: "${DB_PASSWORD}"
+      MB_DB_HOST: "application_database"
+      MB_PASSWORD_COMPLEXITY: strong
+      MB_PASSWORD_LENGTH: 10
+      JAVA_TIMEZONE: "${MB_JAVA_TIMEZONE}"
+    ports:
+      - 127.0.0.1:${MB_PORT}:3000
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    depends_on:
+      - application_database
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - "./nginx/conf.d:/etc/nginx/conf.d"
+    depends_on:
+      - metabase
+  mysql_financial_data:
+    image: mysql:latest
+    container_name: mysql_financial_data
+    environment:
+      MYSQL_ROOT_PASSWORD: production_server
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
+    restart: always

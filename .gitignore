@@ -1,2 +1,7 @@
-__pycache__
+# Ignore the mysql directory
+mysql/
+
+# Ignore the pgdata directory
+pgdata/
+
 *.xlsx

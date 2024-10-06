@@ -1,0 +1,58 @@
+create or REPLACE  view all_transactions as
+with tenor_periods_1 as (
+SELECT
+	tenor_start_date,
+	cast(GREATEST(lag(tenor_start_date, 1, 0) over(PARTITION by type_of_credit_card
+order by
+	tenor_start_date),
+	min(tenor_start_date) over(PARTITION by type_of_credit_card
+order by
+	tenor_start_date) ) as date)
+	prev_tenor_date,
+	Payment_Due_Date ,
+	cast(GREATEST(lag(Payment_Due_Date, 1, 0) over(PARTITION by type_of_credit_card
+order by
+	Payment_Due_Date),
+	min(Payment_Due_Date) over(PARTITION by type_of_credit_card
+order by
+	Payment_Due_Date) ) as date) prev_payment_due_date,
+	type_of_credit_card,
+	file_name
+FROM
+	Tenor_Periods tp)
+	select
+	CASE
+		when str_to_date(CONCAT(cctf.Transaction_Date , '-', DATE_FORMAT(tp.tenor_start_date, '%Y') ),
+		'%d-%m-%Y') between tp.tenor_start_date and tp.payment_due_date then str_to_date(CONCAT(cctf.Transaction_Date , '-', DATE_FORMAT(tp.tenor_start_date, '%Y') ),
+		'%d-%m-%Y')
+		when str_to_date(CONCAT(cctf.Transaction_Date , '-', DATE_FORMAT(tp.Payment_Due_Date, '%Y') ),
+		'%d-%m-%Y') between tp.tenor_start_date and tp.payment_due_date then str_to_date(CONCAT(cctf.Transaction_Date , '-', DATE_FORMAT(tp.Payment_Due_Date, '%Y') ),
+		'%d-%m-%Y')
+		when str_to_date(CONCAT(cctf.Transaction_Date , '-', DATE_FORMAT(tp.prev_tenor_date, '%Y') ),
+		'%d-%m-%Y') between tp.prev_tenor_date and tp.prev_payment_due_date then str_to_date(CONCAT(cctf.Transaction_Date , '-', DATE_FORMAT(tp.prev_tenor_date, '%Y') ),
+		'%d-%m-%Y')
+		when str_to_date(CONCAT(cctf.Transaction_Date , '-', DATE_FORMAT(tp.prev_payment_due_date, '%Y') ),
+		'%d-%m-%Y') between tp.prev_tenor_date and tp.prev_payment_due_date then str_to_date(CONCAT(cctf.Transaction_Date , '-', DATE_FORMAT(tp.prev_payment_due_date, '%Y') ),
+		'%d-%m-%Y')
+	END
+	Transaction_Date ,
+	CASE
+		when str_to_date(CONCAT(cctf.Value_Date , '-', DATE_FORMAT(tp.tenor_start_date, '%Y') ),
+		'%d-%m-%Y') between tp.tenor_start_date and tp.payment_due_date then str_to_date(CONCAT(cctf.Value_Date , '-', DATE_FORMAT(tp.tenor_start_date, '%Y') ),
+		'%d-%m-%Y')
+		when str_to_date(CONCAT(cctf.Value_Date , '-', DATE_FORMAT(tp.Payment_Due_Date, '%Y') ),
+		'%d-%m-%Y') between tp.tenor_start_date and tp.payment_due_date then str_to_date(CONCAT(cctf.Value_Date , '-', DATE_FORMAT(tp.Payment_Due_Date, '%Y') ),
+		'%d-%m-%Y')
+		when str_to_date(CONCAT(cctf.Value_Date , '-', DATE_FORMAT(tp.prev_tenor_date, '%Y') ),
+		'%d-%m-%Y') between tp.prev_tenor_date and tp.prev_payment_due_date then str_to_date(CONCAT(cctf.Value_Date , '-', DATE_FORMAT(tp.prev_tenor_date, '%Y') ),
+		'%d-%m-%Y')
+		when str_to_date(CONCAT(cctf.Value_Date , '-', DATE_FORMAT(tp.prev_payment_due_date, '%Y') ),
+		'%d-%m-%Y') between tp.prev_tenor_date and tp.prev_payment_due_date then str_to_date(CONCAT(cctf.Value_Date , '-', DATE_FORMAT(tp.prev_payment_due_date, '%Y') ),
+		'%d-%m-%Y')
+	END Value_Date ,
+	cctf.Description ,
+	cctf.signed_amount
+from
+	credit_card_transaction_files cctf
+inner join tenor_periods_1 tp on
+	cctf.file_name = tp.file_name
