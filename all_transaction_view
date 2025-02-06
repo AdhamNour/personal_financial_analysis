@@ -55,4 +55,4 @@ FROM
 from
 	credit_card_transaction_files cctf
 inner join tenor_periods_1 tp on
-	cctf.file_name = tp.file_name
+	cctf.file_name = tp.file_name and cctf.Transaction_Date <>'00-00'
