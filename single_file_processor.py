@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import os
 from sqlalchemy import create_engine
@@ -28,9 +29,29 @@ def load_transaction(host_name :str,database_name:str,username:str,password:str,
         df[['Transaction_Amount', 'sign']] = df['Amount'].apply(
             lambda x: x.split(" ", 1) if " " in x else [x, None]
         ).apply(pd.Series)
+
         df['Transaction_Amount']=df['Transaction_Amount'].astype('float')
         df['signed_amount'] = df['Transaction_Amount'].where(~df['sign'].isnull(), -1 * df['Transaction_Amount'])
         df = df.drop(columns=['Amount', 'Transaction_Amount', 'sign'])
+        df['Transaction_Date'] = df['Transaction_Date'].fillna(method='ffill')
+        df['Value_Date'] = df['Value_Date'].fillna(method='ffill')
+        df['currency_value'] = df['Description'].shift(-1)
+        df['signed_ammount_shift'] = df['signed_amount'].shift(-1)
+        # Condition: signed_amont + signed_ammount_shift == signed_amont
+        mask = df['signed_amount'] + df['signed_ammount_shift'] != df['signed_amount']
+
+        # Update "Description" column by appending 'currency_value'
+        df.loc[mask, 'currency_value'] = np.nan
+        df['currency']=df['currency_value'].astype('str').str[:3].replace('nan',np.nan);
+        df['value']=df['currency_value'].astype('str').str[3:].replace('nan',np.nan);   
+
+        df=df[df['signed_amount']!=0]
+        df['value'] = pd.to_numeric(df['value'].str.replace(',', '.', regex=True), errors='coerce')
+        df['currency']=df['currency'].astype('str')
+        df['currency'] = df['currency'].replace('nan', '')
+        
+        df = df.drop(columns=['currency_value', 'signed_ammount_shift',])
+        
         filename = os.path.basename(file_path)
         df['file_name']=filename
         engine = create_engine(f"mysql+pymysql://{username}:{password}@{host_name}/{database_name}")

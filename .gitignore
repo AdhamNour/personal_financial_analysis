@@ -5,3 +5,6 @@ mysql/
 pgdata/
 
 *.xlsx
+*.csv
+*.sqlite
+*.db
