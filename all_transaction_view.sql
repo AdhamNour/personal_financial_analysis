@@ -51,8 +51,8 @@ FROM
 		'%d-%m-%Y')
 	END Value_Date ,
 	cctf.Description ,
-	cctf.signed_amount
+	cctf.signed_amount,cctf.currency ,cctf.value 
 from
 	credit_card_transaction_files cctf
 inner join tenor_periods_1 tp on
-	cctf.file_name = tp.file_name and cctf.Transaction_Date <>'00-00'
+	cctf.file_name = tp.file_name and cctf.Transaction_Date <>'00-00' order by Transaction_Date
