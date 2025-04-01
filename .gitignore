@@ -8,3 +8,5 @@ pgdata/
 *.csv
 *.sqlite
 *.db
+*.env
+*.log
