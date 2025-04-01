@@ -33,14 +33,14 @@ services:
     depends_on:
       - application_database
 
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    volumes:
-      - "./nginx/conf.d:/etc/nginx/conf.d"
-    depends_on:
-      - metabase
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - "./nginx/conf.d:/etc/nginx/conf.d"
+  #   depends_on:
+  #     - metabase
   mysql_financial_data:
     image: mysql:latest
     container_name: mysql_financial_data
